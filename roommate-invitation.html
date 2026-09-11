@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>An Exclusive Invitation — Roommate Proposal</title>
+
+<!-- Google Fonts: Fraunces for elegant display serif, Karla for clean body text -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Tailwind CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+  :root{
+    --cream: #FBF6EF;
+    --cream-deep: #F3ECE1;
+    --blush: #F2D9DC;
+    --rose: #D9A6A3;
+    --gold: #C6A15B;
+    --gold-soft: #E7D5AC;
+    --charcoal: #2A2420;
+    --ink: #55473D;
+  }
+
+  *{ scroll-behavior: smooth; }
+
+  body{
+    background-color: var(--cream);
+    color: var(--charcoal);
+    font-family: 'Karla', sans-serif;
+  }
+
+  .font-display{
+    font-family: 'Fraunces', serif;
+  }
+
+  /* Thin gold divider used to encode structure, echoing a printed invitation card */
+  .gold-rule{
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  .gold-rule-solid{
+    height: 1px;
+    background-color: var(--gold);
+    opacity: 0.5;
+  }
+
+  /* Envelope intro overlay */
+  #envelope-overlay{
+    position: fixed; inset: 0; z-index: 50;
+    background: var(--cream-deep);
+    display: flex; align-items: center; justify-content: center;
+    transition: opacity 0.9s ease, visibility 0.9s ease;
+  }
+  #envelope-overlay.hidden-overlay{
+    opacity: 0; visibility: hidden; pointer-events: none;
+  }
+
+  .envelope{
+    position: relative;
+    width: min(78vw, 340px);
+    aspect-ratio: 3/2;
+    cursor: pointer;
+  }
+  .envelope-body{
+    position: absolute; inset: 0;
+    background: var(--cream);
+    border: 1px solid var(--gold);
+  }
+  .envelope-flap{
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 50%;
+    background: var(--blush);
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+    transform-origin: top;
+    transition: transform 1.1s cubic-bezier(.6,.05,.28,1);
+    border-bottom: 1px solid var(--gold);
+  }
+  .envelope.opened .envelope-flap{
+    transform: rotateX(180deg);
+  }
+  .seal{
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    width: 58px; height: 58px;
+    border-radius: 9999px;
+    background: var(--gold);
+    display:flex; align-items:center; justify-content:center;
+    box-shadow: 0 2px 10px rgba(198,161,91,0.5);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    z-index: 2;
+  }
+  .envelope.opened .seal{
+    opacity: 0;
+    transform: translate(-50%,-50%) scale(0.5);
+  }
+  .seal span{
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    color: var(--cream);
+    font-size: 1.5rem;
+  }
+  .envelope-hint{
+    font-size: 0.8rem;
+    letter-spacing: 0.02em;
+    color: var(--ink);
+  }
+
+  /* Soft hand-drawn-feel checkmark bullets for the lease terms */
+  .term-item{
+    position: relative;
+    padding-left: 2.25rem;
+  }
+  .term-item::before{
+    content: "";
+    position: absolute;
+    left: 0; top: 0.35rem;
+    width: 1.4rem; height: 1.4rem;
+    border: 1px solid var(--gold);
+    border-radius: 9999px;
+  }
+  .term-item::after{
+    content: "";
+    position: absolute;
+    left: 0.42rem; top: 0.63rem;
+    width: 0.55rem; height: 0.3rem;
+    border-left: 1.5px solid var(--gold);
+    border-bottom: 1.5px solid var(--gold);
+    transform: rotate(-45deg);
+  }
+
+  /* Perk card */
+  .perk-card{
+    background: var(--cream);
+    border: 1px solid rgba(198,161,91,0.35);
+    transition: transform 0.5s ease, box-shadow 0.5s ease, border-color 0.5s ease;
+  }
+  .perk-card:hover{
+    transform: translateY(-6px);
+    box-shadow: 0 18px 40px -20px rgba(42,36,32,0.35);
+    border-color: var(--gold);
+  }
+
+  /* Accept button glow pulse (subtle, invites attention on first arrival) */
+  @keyframes softGlow{
+    0%, 100% { box-shadow: 0 0 0 0 rgba(198,161,91,0.35); }
+    50% { box-shadow: 0 0 0 10px rgba(198,161,91,0); }
+  }
+  .accept-btn{
+    animation: softGlow 3.2s ease-in-out infinite;
+  }
+
+  #dodge-wrap{
+    position: relative;
+    height: 5.5rem;
+  }
+  #review-btn{
+    position: absolute;
+    transition: left 0.35s ease, top 0.35s ease;
+  }
+
+  .fade-msg{
+    transition: opacity 0.3s ease;
+  }
+
+  #confetti-canvas{
+    position: fixed; inset: 0;
+    pointer-events: none;
+    z-index: 60;
+  }
+
+  #accept-modal{
+    position: fixed; inset: 0; z-index: 55;
+    background: rgba(42,36,32,0.45);
+    display:flex; align-items:center; justify-content:center;
+    opacity: 0; visibility: hidden;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+  }
+  #accept-modal.show{
+    opacity: 1; visibility: visible;
+  }
+  #accept-modal .modal-card{
+    transform: scale(0.92) translateY(10px);
+    transition: transform 0.4s cubic-bezier(.2,.8,.3,1.2);
+  }
+  #accept-modal.show .modal-card{
+    transform: scale(1) translateY(0);
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .accept-btn{ animation: none; }
+    *{ transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body class="antialiased">
+
+<!-- ============ ENVELOPE INTRO OVERLAY ============ -->
+<div id="envelope-overlay">
+  <div class="text-center">
+    <div id="envelope" class="envelope mx-auto">
+      <div class="envelope-body"></div>
+      <div class="envelope-flap"></div>
+      <div class="seal"><span>&amp;</span></div>
+    </div>
+    <p class="envelope-hint mt-6 font-display italic">Tap the seal to open your invitation</p>
+  </div>
+</div>
+
+<!-- ============ CONFETTI CANVAS ============ -->
+<canvas id="confetti-canvas"></canvas>
+
+<!-- ============ ACCEPT MODAL ============ -->
+<div id="accept-modal">
+  <div class="modal-card bg-[var(--cream)] border border-[var(--gold)] max-w-sm w-[85%] px-8 py-10 text-center">
+    <p class="font-display italic text-2xl mb-3" style="color:var(--charcoal)">Welcome home.</p>
+    <p class="text-[var(--ink)] leading-relaxed mb-6">The lease is signed, the coffee bar is stocked, and your side of the closet is already waiting. Let's go find a couch we'll both ruin with snacks.</p>
+    <button onclick="closeModal()" class="font-display italic px-6 py-2 border border-[var(--gold)] text-[var(--charcoal)] hover:bg-[var(--gold)] hover:text-[var(--cream)] transition-colors duration-300">Close</button>
+  </div>
+</div>
+
+<!-- ============ HERO SECTION ============ -->
+<section id="hero" class="min-h-screen flex items-center justify-center px-6 py-24 relative overflow-hidden">
+  <!-- soft background shape, subtle, echoes a wax seal / botanical motif rather than a generic gradient blob -->
+  <div class="absolute -top-24 -right-24 w-72 h-72 rounded-full opacity-40" style="background: radial-gradient(circle, var(--blush), transparent 70%);"></div>
+  <div class="absolute -bottom-32 -left-20 w-80 h-80 rounded-full opacity-40" style="background: radial-gradient(circle, var(--gold-soft), transparent 70%);"></div>
+
+  <div class="relative max-w-2xl text-center">
+    <p class="font-display italic text-lg mb-4" style="color:var(--ink)">Dear <span id="friend-name">[Friend's Name]</span>,</p>
+    <h1 class="font-display text-5xl sm:text-6xl md:text-7xl leading-[1.05] mb-6" style="color:var(--charcoal)">
+      An Exclusive Invitation
+    </h1>
+    <p class="text-base sm:text-lg leading-relaxed max-w-lg mx-auto mb-10" style="color:var(--ink)">
+      A one-bedroom heart, recently renovated to include a second bedroom — yours, should you accept. Viewings available immediately, references not required, since we've already lived a lifetime of inside jokes together.
+    </p>
+    <button id="explore-btn" onclick="document.getElementById('perks').scrollIntoView()" class="font-display italic text-lg px-9 py-3 border border-[var(--charcoal)] text-[var(--charcoal)] hover:bg-[var(--charcoal)] hover:text-[var(--cream)] transition-colors duration-500">
+      Explore the Lease
+    </button>
+  </div>
+</section>
+
+<!-- ============ PROPERTY & PERKS SECTION ============ -->
+<section id="perks" class="px-6 py-24" style="background: var(--cream-deep);">
+  <div class="max-w-5xl mx-auto">
+    <div class="text-center mb-16">
+      <h2 class="font-display text-4xl sm:text-5xl mb-4" style="color:var(--charcoal)">Property &amp; Perks</h2>
+      <div class="gold-rule w-40 mx-auto mb-4"></div>
+      <p class="font-display italic text-lg" style="color:var(--ink)">A listing, lovingly exaggerated</p>
+    </div>
+
+    <div class="grid sm:grid-cols-2 gap-6">
+      <!-- Perk 1 -->
+      <div class="perk-card p-8">
+        <svg class="w-8 h-8 mb-4" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.3">
+          <path d="M4 3v9a3 3 0 0 0 3 3v6M4 3h3M7 3v9M20 3v18M11 14c3 0 5-2 5-5V3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <h3 class="font-display text-xl mb-2" style="color:var(--charcoal)">Gourmet Kitchen</h3>
+        <p class="text-[var(--ink)] leading-relaxed">For late-night snacking, questionable 2am recipes, and the wine nights that turn into breakfast.</p>
+      </div>
+
+      <!-- Perk 2 -->
+      <div class="perk-card p-8">
+        <svg class="w-8 h-8 mb-4" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.3">
+          <path d="M3 20h18M5 20V9l7-5 7 5v11M9 20v-6h6v6" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="12" cy="6.5" r="1.2" fill="var(--gold)" stroke="none"/>
+        </svg>
+        <h3 class="font-display text-xl mb-2" style="color:var(--charcoal)">Sunlit Living Room</h3>
+        <p class="text-[var(--ink)] leading-relaxed">Perfect for movie marathons, blanket forts, and the couch we will absolutely fall asleep on together.</p>
+      </div>
+
+      <!-- Perk 3 -->
+      <div class="perk-card p-8">
+        <svg class="w-8 h-8 mb-4" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.3">
+          <path d="M5 10h11a2 2 0 0 1 2 2 4 4 0 0 1-4 4H8a4 4 0 0 1-4-4v-2Z" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M16 10.5c1.8-.3 3 .7 3 2s-1.2 2.3-3 2M8 4c-.6.6-.6 1.4 0 2M11 4c-.6.6-.6 1.4 0 2" stroke-linecap="round"/>
+        </svg>
+        <h3 class="font-display text-xl mb-2" style="color:var(--charcoal)">Dedicated Coffee / Tea Bar</h3>
+        <p class="text-[var(--ink)] leading-relaxed">Stocked for early mornings, late deadlines, and every emotional-support beverage in between.</p>
+      </div>
+
+      <!-- Perk 4 -->
+      <div class="perk-card p-8">
+        <svg class="w-8 h-8 mb-4" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.3">
+          <path d="M12 21s-7-4.35-9.5-8.5C.7 9 2.4 5 6 5c2 0 3.3 1.1 4 2.2C10.7 6.1 12 5 14 5c3.6 0 5.3 4 3.5 7.5C15 16.65 12 21 12 21Z" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <h3 class="font-display text-xl mb-2" style="color:var(--charcoal)">Built-in Best Friend</h3>
+        <p class="text-[var(--ink)] leading-relaxed">A personal cheerleader included at no extra cost, available for pep talks, hype songs, and hard days.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ROOMMATE AGREEMENT SECTION ============ -->
+<section id="terms" class="px-6 py-24">
+  <div class="max-w-2xl mx-auto">
+    <div class="text-center mb-14">
+      <h2 class="font-display text-4xl sm:text-5xl mb-4" style="color:var(--charcoal)">The Roommate Agreement</h2>
+      <div class="gold-rule w-40 mx-auto mb-4"></div>
+      <p class="font-display italic text-lg" style="color:var(--ink)">Terms both parties are already breaking</p>
+    </div>
+
+    <div class="border border-[var(--gold)] p-8 sm:p-12" style="background: var(--cream);">
+      <ul class="space-y-6">
+        <li class="term-item text-[var(--ink)] leading-relaxed">Shared, uncontested control of the Spotify queue — vetoes require a valid emotional reason.</li>
+        <li class="term-item text-[var(--ink)] leading-relaxed">Mandatory movie nights, with equally mandatory snacks. No exceptions for "already ate."</li>
+        <li class="term-item text-[var(--ink)] leading-relaxed">An equal split of joy, laughter, and chores — though the joy will likely run over budget.</li>
+        <li class="term-item text-[var(--ink)] leading-relaxed">Full visitation rights to each other's closets, snacks, and emotional crises, at any hour.</li>
+        <li class="term-item text-[var(--ink)] leading-relaxed">This agreement renews automatically, indefinitely, with no notice period required to stay.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ RSVP SECTION ============ -->
+<section id="rsvp" class="px-6 py-28 text-center" style="background: var(--cream-deep);">
+  <div class="max-w-xl mx-auto">
+    <h2 class="font-display text-4xl sm:text-5xl mb-4" style="color:var(--charcoal)">Your Response, Please</h2>
+    <div class="gold-rule w-40 mx-auto mb-4"></div>
+    <p class="text-[var(--ink)] leading-relaxed mb-14">Kindly indicate your intentions below. One option is easy. The other one might run.</p>
+
+    <div class="flex flex-col sm:flex-row items-center justify-center gap-8 sm:gap-10">
+      <button id="accept-btn" onclick="acceptLease()" class="accept-btn font-display italic text-lg px-9 py-4 text-[var(--cream)] w-full sm:w-auto" style="background: var(--gold);">
+        Accept Lease (Move In With You!)
+      </button>
+
+      <div id="dodge-wrap" class="w-full sm:w-64">
+        <button id="review-btn" onclick="dodgeMessage()" class="font-display italic text-lg px-9 py-4 border border-[var(--charcoal)] text-[var(--charcoal)] bg-transparent whitespace-nowrap">
+          Review Terms (Negotiate)
+        </button>
+      </div>
+    </div>
+
+    <p id="dodge-note" class="fade-msg font-display italic text-sm mt-8 opacity-0" style="color:var(--ink)"></p>
+  </div>
+</section>
+
+<footer class="px-6 py-10 text-center">
+  <div class="gold-rule-solid w-24 mx-auto mb-4"></div>
+  <p class="font-display italic text-sm" style="color:var(--ink)">With all my love and half my closet space.</p>
+</footer>
+
+<script>
+  // ---------- Envelope intro interaction ----------
+  const envelope = document.getElementById('envelope');
+  const overlay = document.getElementById('envelope-overlay');
+  envelope.addEventListener('click', () => {
+    envelope.classList.add('opened');
+    setTimeout(() => overlay.classList.add('hidden-overlay'), 650);
+  });
+
+  // ---------- Dodging "Review Terms" button ----------
+  const wrap = document.getElementById('dodge-wrap');
+  const reviewBtn = document.getElementById('review-btn');
+  const dodgeNote = document.getElementById('dodge-note');
+  let dodgeCount = 0;
+  const dodgeMessages = [
+    "There's nothing to negotiate, actually.",
+    "Still just two bedrooms and one very good friendship.",
+    "The lease is final. This button is just for show now.",
+    "Okay, you caught it. Terms are still non-negotiable."
+  ];
+
+  function placeButtonRandomly(){
+    const wrapRect = wrap.getBoundingClientRect();
+    const btnRect = reviewBtn.getBoundingClientRect();
+    const maxLeft = Math.max(wrapRect.width - btnRect.width, 0);
+    const maxTop = Math.max(wrapRect.height - btnRect.height, 0);
+    reviewBtn.style.left = (Math.random() * maxLeft) + 'px';
+    reviewBtn.style.top = (Math.random() * maxTop) + 'px';
+  }
+
+  reviewBtn.addEventListener('mouseenter', () => {
+    if (dodgeCount < 5) {
+      placeButtonRandomly();
+    }
+  });
+
+  function dodgeMessage(){
+    dodgeCount++;
+    const msg = dodgeMessages[Math.min(dodgeCount - 1, dodgeMessages.length - 1)];
+    dodgeNote.textContent = msg;
+    dodgeNote.style.opacity = 1;
+    if (dodgeCount >= 5) {
+      // let it be caught eventually, with a graceful final message
+      reviewBtn.style.left = '';
+      reviewBtn.style.top = '';
+      dodgeNote.textContent = "Fine. Terms reviewed. Verdict: unanimous yes.";
+    }
+  }
+
+  // ---------- Accept lease: modal + confetti ----------
+  function acceptLease(){
+    document.getElementById('accept-modal').classList.add('show');
+    launchConfetti();
+  }
+  function closeModal(){
+    document.getElementById('accept-modal').classList.remove('show');
+  }
+
+  // ---------- Lightweight confetti (gold + blush + rose) ----------
+  const canvas = document.getElementById('confetti-canvas');
+  const ctx = canvas.getContext('2d');
+  function resizeCanvas(){
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+
+  const confettiColors = ['#C6A15B', '#F2D9DC', '#D9A6A3', '#E7D5AC'];
+  let particles = [];
+  let confettiRunning = false;
+
+  function launchConfetti(){
+    particles = [];
+    const count = 140;
+    for (let i = 0; i < count; i++){
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: -20 - Math.random() * canvas.height * 0.3,
+        size: 4 + Math.random() * 6,
+        speedY: 2 + Math.random() * 3,
+        speedX: (Math.random() - 0.5) * 2,
+        rotation: Math.random() * Math.PI,
+        rotationSpeed: (Math.random() - 0.5) * 0.2,
+        color: confettiColors[Math.floor(Math.random() * confettiColors.length)],
+        shape: Math.random() > 0.5 ? 'circle' : 'rect'
+      });
+    }
+    if (!confettiRunning){
+      confettiRunning = true;
+      requestAnimationFrame(animateConfetti);
+    }
+  }
+
+  function animateConfetti(){
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let stillActive = false;
+    particles.forEach(p => {
+      p.y += p.speedY;
+      p.x += p.speedX;
+      p.rotation += p.rotationSpeed;
+      if (p.y < canvas.height + 20) stillActive = true;
+
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rotation);
+      ctx.fillStyle = p.color;
+      if (p.shape === 'circle'){
+        ctx.beginPath();
+        ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+      }
+      ctx.restore();
+    });
+
+    if (stillActive){
+      requestAnimationFrame(animateConfetti);
+    } else {
+      confettiRunning = false;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+  }
+</script>
+</body>
+</html>
